@@ -7,3 +7,9 @@ TOKEN=DiscordToken
 CHANNEL_ID=ChannelID
 DISCORD_SERVER_ID=GuildID
 ```
+
+- CHANNEL_ID is used for the default channel when the user enters the website
+- DISCORD_SERVER_ID is the server to fetch the channels from
+
+# NOTE:
+Make sure to change the channel ids and names in the +page.svelte file!
