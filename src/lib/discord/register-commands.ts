@@ -21,7 +21,12 @@ export default async function registerCommands() {
 					name: 'reset',
 					description: 'Reset your privacy settings',
 					type: ApplicationCommandOptionType.Boolean
-				}
+				},
+                {
+                    name: 'show-posts',
+                    description: 'Show posts',
+                    type: ApplicationCommandOptionType.Boolean
+                }
 			]
 		}
 	];

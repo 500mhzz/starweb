@@ -6,6 +6,7 @@ const userSchema = new Schema({
     username: String,
     userNick: { type: String, default: null },
     anonymous: { type: Boolean, default: false },
+    showPosts: Boolean,
 })
 
 export default model("userSchema", userSchema, "users")

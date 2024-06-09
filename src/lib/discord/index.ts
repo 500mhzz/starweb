@@ -20,8 +20,10 @@ client.on('interactionCreate', async (interaction) => {
 		try {
 			if (anonymiseOption !== null) {
 				const userRecord = await userSchema.findOne({ userId: interaction.user.id });
-				if(userRecord && userRecord.anonymous === anonymiseOption.value) {
-					await interaction.reply(`You are already ${anonymiseOption ? 'anonymised' : 'de-anonymised'}.`);
+				if (userRecord && userRecord.anonymous === anonymiseOption.value) {
+					await interaction.reply(
+						`You are already ${anonymiseOption ? 'anonymised' : 'de-anonymised'}.`
+					);
 					return;
 				}
 				await userSchema.findOneAndUpdate(
@@ -33,7 +35,7 @@ client.on('interactionCreate', async (interaction) => {
 					`Your privacy settings have been updated to ${anonymiseOption ? 'anonymise' : 'de-anonymise'}.`
 				);
 			}
-	
+
 			if (interaction.options.get('nickname')) {
 				const nickname = interaction.options.get('nickname');
 				if (!nickname) {
@@ -47,12 +49,31 @@ client.on('interactionCreate', async (interaction) => {
 				);
 				await interaction.reply(`Your nickname has been set to "${nickname.value}".`);
 			}
-	
+
 			if (interaction.options.get('reset')) {
 				await userSchema.findOneAndDelete({ userId: interaction.user.id });
 				await interaction.reply('Your privacy settings have been reset.');
 			}
-	
+
+			if (interaction.options.get('show-posts')) {
+				const showPostsOption = interaction.options.get('show-posts')!;
+				const userRecord = await userSchema.findOne({ userId: interaction.user.id });
+				if (userRecord && userRecord.showPosts === showPostsOption.value) {
+					await interaction.reply(
+						`You are already ${showPostsOption.value ? 'showing' : 'hiding'} your posts.`
+					);
+					return;
+				}
+				await userSchema.findOneAndUpdate(
+					{ userId: interaction.user.id },
+					{ $set: { showPosts: showPostsOption.value, username: interaction.user.username } },
+					{ upsert: true }
+				);
+				await interaction.reply(
+					`Your privacy settings have been updated to ${showPostsOption.value ? 'show' : 'hide'} your posts.`
+				);
+			}
+
 			if (
 				anonymiseOption === null &&
 				!interaction.options.get('nickname') &&

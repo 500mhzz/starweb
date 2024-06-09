@@ -35,6 +35,7 @@
   "type": "module",
   "dependencies": {
     "discord.js": "^14.15.3",
+    "exifreader": "^4.23.2",
     "mongoose": "^8.4.1"
   }
 }

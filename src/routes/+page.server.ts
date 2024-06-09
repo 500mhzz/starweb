@@ -1,6 +1,7 @@
 import { env } from '$env/dynamic/private';
 import client from '$lib/discord/index.js';
 import userSchema from '$lib/schemas/userSchema.js';
+
 export async function load({ fetch, url }) {
 	if (!client.readyAt) {
 		await new Promise((resolve) => {
@@ -24,60 +25,79 @@ export async function load({ fetch, url }) {
 			error: new Error('Channel not found')
 		};
 
-	if (page !== 1) {
-		// Calculate the number of messages to skip
-		const skipMessages = (page - 1) * postsPerPage;
-		let lastMessageId = await channel.messages
-			.fetch({ limit: 1 })
-			.then((messages) => messages.first()?.id);
 
-		// Fetch messages in batches to skip the correct amount
-		for (let i = 0; i < skipMessages; i += postsPerPage) {
-			const fetchLimit = Math.min(postsPerPage, skipMessages - i);
-			messages = await channel.messages.fetch({ limit: fetchLimit, before: lastMessageId });
-			lastMessageId = messages.last()?.id;
-			if (messages.size < fetchLimit) break; // Break if we've reached the end of the messages
+	try {
+		if (page !== 1) {
+			// Calculate the number of messages to skip
+			const skipMessages = (page - 1) * postsPerPage;
+			let lastMessageId: any = await channel.messages
+				.fetch({ limit: 1 })
+				.then((messages) => messages.first()?.id);
+	
+			// Fetch messages in batches to skip the correct amount
+			for (let i = 0; i < skipMessages; i += postsPerPage) {
+				const fetchLimit = Math.min(postsPerPage, skipMessages - i);
+				messages = await channel.messages.fetch({ limit: fetchLimit, before: lastMessageId });
+				lastMessageId = messages.last()?.id;
+				if (messages.size < fetchLimit) break; // Break if we've reached the end of the messages
+			}
+	
+			// Now fetch the actual page of messages
+			messages = await channel.messages.fetch({ limit: postsPerPage, before: lastMessageId });
+		} else {
+			messages = await channel.messages.fetch({ limit: postsPerPage });
 		}
-
-		// Now fetch the actual page of messages
-		messages = await channel.messages.fetch({ limit: postsPerPage, before: lastMessageId });
-	} else {
-		messages = await channel.messages.fetch({ limit: postsPerPage });
-	}
-
-	// Replace the forEach loop with a for...of loop to handle async operations
-	for (const message of messages.values()) {
-		const embedsWithTitleAndAttachment = message.embeds.filter(
-			(embed) => embed.author && embed.image
-		);
-		for (const embed of embedsWithTitleAndAttachment) {
-			// Calculate total reactions for the message
-			const totalReactions = Array.from(message.reactions.cache.values()).reduce(
-				(acc, reaction) => acc + reaction.count,
-				0
+	
+		for (const message of messages.values()) {
+			const embedsWithTitleAndAttachment = message.embeds.filter(
+				(embed) => embed.author && embed.image
 			);
-
-			let username = embed.author?.name;
-			const user = await userSchema.findOne({ username: username?.toLowerCase() });
-
-			if (user && user.anonymous) {
-				username = 'Anonymous';
+	
+			const extractUserId = (data: string) => {
+				const match = data.match(/<@(\d+)>/);
+				return match ? match[1] : null;
+			};
+	
+			const messagesContent = extractUserId(message.content);
+	
+			const userRecord = await userSchema.findOne({ userId: messagesContent });
+	
+			if(userRecord?.showPosts === false) {
+				continue;
 			}
+	
+			for (const embed of embedsWithTitleAndAttachment) {
+				const totalReactions = Array.from(message.reactions.cache.values()).reduce(
+					(acc, reaction) => acc + reaction.count,
+					0
+				);
+	
+				let username = userRecord?.username || embed.author?.name || 'Anonymous';
+	
+				if (userRecord && userRecord.anonymous) {
+					username = 'Anonymous';
+				}
+	
+				if (userRecord && userRecord.userNick && !userRecord.anonymous) {
+					username = userRecord.userNick;
+				}
 
-			if (user && user.userNick && !user.anonymous) {
-				username = user.userNick;
+				posts.push({
+					id: message.id,
+					author: username,
+					image: embed.image?.url,
+					timestamp: message.createdTimestamp,
+					url: message.url,
+					reactions: totalReactions,
+				});
 			}
-
-			posts.push({
-				id: message.id,
-				author: username,
-				image: embed.image?.url,
-				description: embed.description,
-				timestamp: message.createdTimestamp,
-				url: message.url,
-				reactions: totalReactions // Add the total reactions count here
-			});
 		}
+	} catch (error) {
+		console.log(error);
+		return {
+			status: 500,
+			error: new Error('Failed to fetch messages')
+		};
 	}
 
 	return {
