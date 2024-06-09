@@ -15,6 +15,7 @@
 	interface Data {
 		posts: Post[];
 		page: number;
+		channelId: string;
 	}
 
 	interface Channel {
@@ -23,10 +24,7 @@
 	}
 
 	export let data: Data;
-
-	console.log(data);
-
-	const channels: Channel[] = [
+	const channels = [
 		{
 			name: '#posts',
 			id: '1248927207326482462'
@@ -81,11 +79,11 @@
 	<div class="flex justify-center mt-5 gap-2">
 		<button
 			class="text-white px-4 py-2 sm:px-5 sm:py-2 rounded-lg bg-neutral-900/35 border border-white/10"
-			on:click={() => (window.location.href = `/?page=${data.page - 1}`)}>Previous</button
+			on:click={() => (window.location.href = `/?page=${data.page - 1}?channelId=${data.channelId}`)}>Previous</button
 		>
 		<button
 			class="text-white px-4 py-2 sm:px-5 sm:py-2 rounded-lg bg-neutral-900/35 border border-white/10"
-			on:click={() => (window.location.href = `/?page=${data.page + 1}`)}>Next</button
+			on:click={() => (window.location.href = `/?page=${data.page + 1}?channelId=${data.channelId}`)}>Next</button
 		>
 	</div>
 </main>

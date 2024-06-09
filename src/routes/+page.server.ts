@@ -1,6 +1,6 @@
 import { env } from '$env/dynamic/private';
-import client from '$lib/discord.js';
-
+import client from '$lib/discord/index.js';
+import userSchema from '$lib/schemas/userSchema.js';
 export async function load({ fetch, url }) {
 	if (!client.readyAt) {
 		await new Promise((resolve) => {
@@ -45,30 +45,44 @@ export async function load({ fetch, url }) {
 		messages = await channel.messages.fetch({ limit: postsPerPage });
 	}
 
-	messages.forEach((message) => {
+	// Replace the forEach loop with a for...of loop to handle async operations
+	for (const message of messages.values()) {
 		const embedsWithTitleAndAttachment = message.embeds.filter(
 			(embed) => embed.author && embed.image
 		);
-		embedsWithTitleAndAttachment.forEach((embed) => {
+		for (const embed of embedsWithTitleAndAttachment) {
 			// Calculate total reactions for the message
 			const totalReactions = Array.from(message.reactions.cache.values()).reduce(
 				(acc, reaction) => acc + reaction.count,
 				0
 			);
+
+			let username = embed.author?.name;
+			const user = await userSchema.findOne({ username: username?.toLowerCase() });
+
+			if (user && user.anonymous) {
+				username = 'Anonymous';
+			}
+
+			if (user && user.userNick && !user.anonymous) {
+				username = user.userNick;
+			}
+
 			posts.push({
 				id: message.id,
-				author: embed.author?.name,
+				author: username,
 				image: embed.image?.url,
 				description: embed.description,
 				timestamp: message.createdTimestamp,
-                url: message.url,
+				url: message.url,
 				reactions: totalReactions // Add the total reactions count here
 			});
-		});
-	});
+		}
+	}
 
 	return {
 		page,
-		posts
+		posts,
+		channelId
 	};
 }

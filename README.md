@@ -6,4 +6,6 @@ Starweb is a simple WebUi that uses discord.js to get embeds from a channel and 
 TOKEN=DiscordToken
 CHANNEL_ID=ChannelID
 DISCORD_SERVER_ID=GuildID
+
+MONGO_URI="URL of your MongoDB Database"
 ```
