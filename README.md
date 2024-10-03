@@ -19,3 +19,8 @@ MONGO_URI="MongoDB URI"
 
 # NOTE:
 Make sure to change the channel ids and names in the +page.svelte file!
+
+# PREVIEW
+![image](https://github.com/user-attachments/assets/888bfb29-50f6-479f-995b-4e5670ce82e8)
+![image](https://github.com/user-attachments/assets/0407785c-1011-4b84-848b-0e3b8c242684)
+
